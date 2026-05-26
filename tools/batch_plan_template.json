@@ -1,0 +1,35 @@
+{
+  "target_slide_count": null,
+  "batch_size_rule": "5-10 slides per batch; prefer 6-8 for normal decks",
+  "text_editability_rule": "Only main text from the source PDF must be editable; other visual elements may be images.",
+  "batches": [
+    {
+      "batch_number": 1,
+      "slide_range": "1-5",
+      "section": "Cover / contents / background",
+      "source_pdf_pages": [],
+      "slides": [
+        {
+          "slide_number": 1,
+          "title": "",
+          "source_pdf_page_refs": [],
+          "editable_main_text": [],
+          "image_allowed_elements": [
+            "background",
+            "figures",
+            "charts",
+            "decorative elements"
+          ],
+          "layout_notes": ""
+        }
+      ]
+    }
+  ],
+  "final_checks": [
+    "main PDF-derived text is editable",
+    "non-essential visuals may be images",
+    "no important title/key point exists only as flattened image text",
+    "page numbers are continuous",
+    "style is consistent across batches"
+  ]
+}
