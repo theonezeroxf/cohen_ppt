@@ -13,6 +13,16 @@ Before execution, the workflow must first confirm three inputs with the user: wh
 
 When the requested or planned PPT has more than 10 pages, do not generate the whole deck in one pass. Generate slides in smaller batches, then merge them into one consistent final deck.
 
+## Implementation Technology
+
+Use **`img-gen + Presentation`** as the implementation technology for this skill:
+
+- Use `img-gen` only to generate slide background images and any additional image assets requested by `Presentation` for a slide.
+- Use `Presentation` for all remaining work: planning execution, PPT creation, layout, inserting generated images, editable text boxes/shapes/tables, optional speaker notes, page numbering, batch assembly, and merging.
+- `Presentation` defines the image requirements for `img-gen`, including dimensions, style, layout intent, visual references, and editable-text safe areas.
+- Do not use `img-gen` to create final readable titles, bullet points, conclusions, or other critical PDF-derived text. Those must be added through `Presentation` as editable PPT objects.
+- When checking quality, verify both sides of the implementation: `img-gen` backgrounds/assets satisfy `Presentation` requirements and `Presentation` content remains editable.
+
 ## Required Pre-Execution Questions
 
 Before analyzing the PDF or generating any outline, backgrounds, or PPT files, ask the user these questions unless the answer is already explicit in the request:
@@ -37,9 +47,9 @@ For every PDF-to-PPT task:
    - Whether the content needs one slide, multiple slides, or only a brief mention
 4. Allocate PPT slide counts to each content area according to that analysis.
 5. Generate a complete slide outline before creating the PPT.
-6. For each planned slide, call `img-gen` to create a background image that matches the slide purpose and confirmed visual style.
-7. Build the PPT by inserting each generated background image.
-8. Add the slide outline or condensed PDF-derived content on top of the background using editable PowerPoint text objects.
+6. For each planned slide, let `Presentation` define the background and image-asset requirements, then call `img-gen` to create the required background image or supporting image assets.
+7. Use `Presentation` to build the PPT and insert each generated background/image asset.
+8. Use `Presentation` to handle layout and add the slide outline or condensed PDF-derived content on top of the images as editable PowerPoint text objects.
 9. Add speaker notes only if the user requested them.
 10. Verify that important PDF-derived text remains editable and that the final deck follows the outline.
 
@@ -103,26 +113,26 @@ For decks over 10 pages, also create a `batch_plan` with:
 
 ## Per-Slide `img-gen` Background Rule
 
-After the outline is approved or finalized, create a background image for **each slide** with `img-gen` before adding editable text.
+After the outline is approved or finalized, `Presentation` should define each slide’s image needs, then `img-gen` should create the background image and any supporting image assets required by `Presentation` before editable text is added through `Presentation`.
 
-For every slide background prompt, include:
+For every `img-gen` background or image-asset prompt, include the requirements supplied by `Presentation`:
 
 - Slide number and title
 - Slide purpose / key message
 - Confirmed overall deck style; default to **academic minimalist style** if no custom style was specified
 - Color palette
-- Layout direction and safe areas for editable text
+- `Presentation` layout direction, required image dimensions, and safe areas for editable text
 - Whether the background should be abstract, academic, business, technical, minimal, or illustration-heavy
 - Relevant PDF visual references when available
 - Instruction to avoid embedding final readable body text in the image background
 
 ### Background Requirements
 
-- Background images should support the slide narrative without replacing editable content.
-- Avoid putting critical titles, bullet points, conclusions, or PDF-derived main text inside the generated image.
-- Leave clear readable areas where PowerPoint text boxes will be placed.
+- Generated backgrounds and image assets should support the slide narrative without replacing editable content or `Presentation` layout responsibilities.
+- Avoid putting critical titles, bullet points, conclusions, or PDF-derived main text inside any generated image.
+- Leave clear readable areas where `Presentation` will place PowerPoint text boxes.
 - Use visual metaphors, subtle diagrams, section motifs, decorative shapes, or lightly blurred PDF visual references where helpful.
-- If a chart, figure, or table from the PDF is essential, it may be inserted as an image, but its meaning must be explained with editable text.
+- If `Presentation` requests a chart, figure, table, or other supporting image, `img-gen` may create or adapt that image asset, but its meaning must be explained with editable text added by `Presentation`.
 
 ## Speaker Notes Rule
 
@@ -181,7 +191,7 @@ Do not start by generating slides before analyzing the specified PDF content and
 
 Do not assign the same number of slides to each PDF section without considering content amount and importance.
 
-Do not skip the per-slide `img-gen` background step unless the user explicitly asks not to use generated backgrounds.
+Do not skip the per-slide `img-gen` background step unless the user explicitly asks not to use generated backgrounds; additional generated image assets should only be created when requested by `Presentation`.
 
 Do not satisfy the task by only inserting full-page PDF screenshots if the PDF’s main text is not editable.
 
@@ -198,15 +208,16 @@ Do not embed final bullet lists or critical readable paragraphs into `img-gen` b
 For each slide:
 
 1. Read the corresponding PDF section/page range, confirmed PPT style, speaker-notes preference, and approved outline entry.
-2. Generate or reuse the planned `img-gen` background image using the confirmed style, defaulting to academic minimalist style when unspecified.
-3. Insert the background as a full-slide image.
-4. Extract the main text from the corresponding PDF section/page.
-5. Rewrite or condense the main text for presentation use.
-6. Add the rewritten title, key points, and conclusions as editable PPT text boxes.
-7. Add essential PDF figures, charts, diagrams, or tables as images when helpful.
-8. Add editable captions, labels, explanations, or takeaways for important visuals.
-9. Add speaker notes only when requested by the user.
-10. Keep the layout clean and readable, using the background safe areas.
+2. Use `Presentation` to define the needed background and supporting image assets, including dimensions, style, safe areas, and visual references.
+3. Generate or reuse the planned `img-gen` background image and any `Presentation`-requested image assets using the confirmed style, defaulting to academic minimalist style when unspecified.
+4. Use `Presentation` to insert the background as a full-slide image and place any generated supporting image assets.
+5. Extract the main text from the corresponding PDF section/page.
+6. Rewrite or condense the main text for presentation use.
+7. Use `Presentation` to add the rewritten title, key points, and conclusions as editable PPT text boxes.
+8. Use `Presentation` to add essential PDF figures, charts, diagrams, or tables as images when helpful.
+9. Use `Presentation` to add editable captions, labels, explanations, or takeaways for important visuals.
+10. Use `Presentation` to add speaker notes only when requested by the user.
+11. Keep the layout clean and readable, using the background safe areas.
 
 ## Batch Planning for Decks Over 10 Slides
 
@@ -215,8 +226,8 @@ For PPTs over 10 pages:
 1. Analyze the whole requested PDF scope first.
 2. Create the complete slide count allocation and slide outline.
 3. Split the outline into batches of 5–10 slides.
-4. Generate backgrounds and slides in batches using the same visual system.
-5. Merge the batches into one final `.pptx`.
+4. Use `Presentation` to drive batch slide layouts and call `img-gen` only for the backgrounds or image assets required by those layouts.
+5. Use `Presentation` to assemble or merge the batches into one final `.pptx`.
 6. Run consistency and editability checks.
 
 Default batch size:
@@ -254,7 +265,7 @@ All slides and batches must share:
 
 ## Merge Rule
 
-Prefer generating a single final deck from a unified slide specification rather than physically concatenating separate `.pptx` files.
+Prefer generating a single final deck from a unified slide specification with `Presentation` rather than physically concatenating separate `.pptx` files.
 
 If separate batch files are created, merge them only after checking:
 
@@ -263,7 +274,7 @@ If separate batch files are created, merge them only after checking:
 - Font consistency
 - Theme consistency
 - Master/layout consistency when possible
-- Background image consistency
+- Background image and `Presentation`-requested image asset consistency
 - Editable main text presence
 - Speaker notes presence or absence according to the user preference
 
@@ -274,7 +285,7 @@ Before final output, verify:
 - Total slide count matches the planned or requested count
 - Slide count allocation matches the PDF content amount and importance analysis
 - Slide order matches the outline
-- Every slide has a generated or intentionally selected background image
+- Every slide has a generated or intentionally selected background image, and any extra `img-gen` assets were requested by `Presentation`
 - Every slide has editable title or main heading when applicable
 - Main PDF-derived or outline-derived text is editable
 - Non-essential graphics may remain images
@@ -282,7 +293,7 @@ Before final output, verify:
 - Page numbers are continuous
 - No repeated placeholder text
 - No obvious batch-to-batch style drift
-- Background images leave enough contrast and whitespace for editable content
+- Background images and assets leave enough contrast and whitespace for `Presentation` editable content
 - Speaker notes are present only if requested, and absent when not requested
 
 ## Recovery Strategy
@@ -301,7 +312,7 @@ Common fixes:
 
 ## Summary Principle
 
-First ask which PDF content to use, what PPT style to apply, and whether to generate speaker notes. Use academic minimalist style by default when style is unspecified. Then analyze the specified PDF content and decide slide allocation by amount and importance. Then create the outline. Then use `img-gen` to create each slide background. Finally add editable outline/PDF-derived content into the PPT, plus speaker notes only when requested.
+First ask which PDF content to use, what PPT style to apply, and whether to generate speaker notes. Use academic minimalist style by default when style is unspecified. Then analyze the specified PDF content and decide slide allocation by amount and importance. Then create the outline. Then use `Presentation` to define image needs, call `img-gen` only for backgrounds and `Presentation`-requested image assets, and use `Presentation` for all remaining PPT construction, editable outline/PDF-derived content, speaker notes, batching, and merging.
 
 For decks over 10 slides: split, generate, check, and merge.
 
