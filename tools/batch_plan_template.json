@@ -1,35 +1,209 @@
 {
-  "target_slide_count": null,
-  "batch_size_rule": "5-10 slides per batch; prefer 6-8 for normal decks",
-  "text_editability_rule": "Only main text from the source PDF must be editable; other visual elements may be images.",
-  "batches": [
+  "template_name": "ppt_batch_split_img_gen_plan",
+  "template_version": "2.0.0",
+  "purpose": "Plan a PDF-to-PPT deck using img-gen + Presentation by confirming PDF scope, style, and speaker-notes preference; allocating slide counts by content volume and importance; generating an outline; letting Presentation define image requirements; using img-gen for backgrounds and Presentation-requested image assets; and batching decks over 10 slides.",
+  "implementation_technology": {
+    "stack": "img-gen + Presentation",
+    "img_gen_role": "Generate slide background images and any additional image assets requested by Presentation, following Presentation-provided dimensions, style, visual references, and editable-text safe areas.",
+    "presentation_role": "Handle all remaining work: plan execution, PPT creation, layout, inserting generated images, editable text and PowerPoint objects, optional speaker notes, page numbering, batch assembly, and merging.",
+    "critical_rule": "img-gen only produces backgrounds and Presentation-requested image assets. Do not embed final readable titles, bullet points, conclusions, or main PDF-derived text in img-gen images; add them through Presentation as editable PPT content."
+  },
+  "preflight_questions": {
+    "pdf_scope": {
+      "question": "Which part of the PDF should be used to generate the PPT?",
+      "required": true,
+      "status": "unanswered",
+      "accepted_formats": [
+        "page ranges",
+        "chapters",
+        "sections",
+        "figure/table ranges",
+        "named topics"
+      ],
+      "value": null,
+      "notes": "Do not proceed to slide allocation, outline generation, img-gen, or PPT creation until this is known."
+    },
+    "ppt_style": {
+      "question": "What PPT style should be used?",
+      "required": false,
+      "status": "defaulted",
+      "default": "academic minimalist style",
+      "value": "academic minimalist style",
+      "usage": "Use consistently in the PPT theme, Presentation layout choices, and every img-gen background or Presentation-requested image prompt."
+    },
+    "speaker_notes": {
+      "question": "Should speaker notes be generated for the PPT?",
+      "required": false,
+      "status": "defaulted",
+      "default": false,
+      "value": false,
+      "usage": "If true, create concise presenter notes for each slide. If false, do not add speaker notes."
+    }
+  },
+  "deck_plan": {
+    "target_slide_count": null,
+    "actual_planned_slide_count": null,
+    "slide_size": "16:9 widescreen",
+    "confirmed_style": "academic minimalist style",
+    "style_notes": {
+      "color_palette": [],
+      "fonts": [],
+      "title_style": "",
+      "body_style": "",
+      "page_numbering": "",
+      "background_art_direction": "Use the confirmed style; default to academic minimalist style when unspecified. Presentation must define image dimensions, safe areas, and visual requirements before img-gen is called.",
+      "editable_text_overlay_rules": "Presentation controls readable safe areas, high contrast, and consistent spacing for editable text boxes."
+    },
+    "text_editability_rule": "Main PDF-derived or outline-derived text must be editable PowerPoint text added through Presentation; non-essential visuals may be images.",
+    "speaker_notes_rule": "Generate notes only if preflight_questions.speaker_notes.value is true."
+  },
+  "slide_count_allocation": [
     {
-      "batch_number": 1,
-      "slide_range": "1-5",
-      "section": "Cover / contents / background",
-      "source_pdf_pages": [],
-      "slides": [
-        {
-          "slide_number": 1,
-          "title": "",
-          "source_pdf_page_refs": [],
-          "editable_main_text": [],
-          "image_allowed_elements": [
-            "background",
-            "figures",
-            "charts",
-            "decorative elements"
-          ],
-          "layout_notes": ""
-        }
-      ]
+      "source_pdf_scope": "",
+      "section_or_topic": "",
+      "content_volume": "low | medium | high",
+      "importance": "low | medium | high",
+      "visual_complexity": "low | medium | high",
+      "narrative_priority": "low | medium | high",
+      "allocated_slide_count": 0,
+      "allocation_reason": ""
     }
   ],
-  "final_checks": [
-    "main PDF-derived text is editable",
-    "non-essential visuals may be images",
-    "no important title/key point exists only as flattened image text",
+  "slide_outline": [
+    {
+      "slide_number": 1,
+      "title": "",
+      "purpose_or_key_message": "",
+      "source_pdf_refs": {
+        "pages": [],
+        "sections": [],
+        "figures": [],
+        "tables": [],
+        "topics": []
+      },
+      "content_priority": "high | medium | low",
+      "allocation_reason": "",
+      "editable_main_text": {
+        "title": "",
+        "section_heading": "",
+        "bullets": [],
+        "conclusion_or_takeaway": "",
+        "important_labels": [],
+        "important_table_values": [],
+        "visual_explanations_or_captions": []
+      },
+      "image_based_elements_allowed": [
+        "img-gen background",
+        "Presentation-requested image assets",
+        "PDF figures",
+        "charts",
+        "screenshots",
+        "decorative elements",
+        "non-essential tables",
+        "complex formulas"
+      ],
+      "img_gen_background": {
+        "required": true,
+        "status": "not_started",
+        "prompt": "",
+        "presentation_requirements": {
+          "image_purpose": "background | supporting visual asset",
+          "required_dimensions": "",
+          "safe_area_requirements": [],
+          "layout_intent": ""
+        },
+        "confirmed_style": "academic minimalist style",
+        "color_palette": [],
+        "layout_direction": "",
+        "editable_text_safe_areas": [],
+        "visual_references_from_pdf": [],
+        "negative_prompt_or_constraints": [
+          "Do not embed final readable body text into the background image.",
+          "Do not rasterize critical titles, bullet points, conclusions, or main PDF-derived text.",
+          "Leave clean, high-contrast areas for editable PowerPoint text boxes."
+        ],
+        "generated_asset_path": null
+      },
+      "speaker_notes": {
+        "requested": false,
+        "status": "not_applicable",
+        "draft": ""
+      },
+      "layout_notes": "",
+      "quality_checks": {
+        "has_editable_title_or_heading": false,
+        "main_text_is_editable": false,
+        "critical_content_not_flattened": false,
+        "background_has_safe_text_area": false,
+        "notes_match_user_preference": false
+      }
+    }
+  ],
+  "batch_plan": {
+    "required_when_slide_count_over_10": true,
+    "batch_size_rule": "5 slides for design-heavy decks; 6-8 slides for normal academic/report decks; up to 10 slides only when layouts are simple.",
+    "batches": [
+      {
+        "batch_number": 1,
+        "slide_range": "1-5",
+        "logical_section": "Cover / contents / background",
+        "source_pdf_scope": [],
+        "slide_numbers": [],
+        "visual_style_notes": "Use the confirmed deck style consistently across all Presentation layouts, img-gen backgrounds, and Presentation-requested image assets.",
+        "editable_text_requirements": [],
+        "image_based_elements_allowed": [],
+        "speaker_notes_behavior": "Generate only if requested in preflight_questions.speaker_notes.value.",
+        "batch_output_path": null,
+        "batch_checks": [
+          "slide order matches outline",
+          "titles and main text are editable",
+          "img-gen backgrounds are present or intentionally selected",
+          "extra img-gen image assets were requested by Presentation",
+          "background safe areas support readable editable text",
+          "speaker notes presence matches user preference",
+          "style matches other batches"
+        ]
+      }
+    ]
+  },
+  "merge_plan": {
+    "prefer_single_final_deck_from_unified_specification": true,
+    "assembly_tool": "Presentation",
+    "merge_required": false,
+    "batch_files": [],
+    "final_output_path": null,
+    "merge_checks": [
+      "slide order is correct",
+      "page numbers are continuous",
+      "font styles are consistent",
+      "theme is consistent",
+      "background and Presentation-requested image asset art direction is consistent",
+      "main PDF-derived text remains editable",
+      "speaker notes presence or absence matches user preference"
+    ]
+  },
+  "quality_checks": [
+    "PDF scope was confirmed before generation",
+    "PPT style was confirmed or defaulted to academic minimalist style",
+    "implementation technology is img-gen + Presentation",
+    "speaker-notes preference was confirmed or defaulted to no speaker notes",
+    "slide count matches the planned or requested count",
+    "slide allocation reflects PDF content volume and importance",
+    "slide order matches the outline",
+    "every slide has an img-gen background or intentionally selected background",
+    "any additional img-gen image assets were requested by Presentation",
+    "main PDF-derived or outline-derived text is editable",
+    "no critical title/key point/conclusion exists only as flattened image text",
+    "speaker notes are present only if requested",
     "page numbers are continuous",
-    "style is consistent across batches"
+    "visual style is consistent across batches",
+    "backgrounds leave enough contrast and whitespace for editable content"
+  ],
+  "recovery_strategy": [
+    "Reallocate slides if a section is too compressed or too sparse.",
+    "Regenerate weak slide backgrounds with larger safe areas or lower visual complexity.",
+    "Reduce text density and convert long paragraphs into editable bullets.",
+    "Use PDF visuals as references or supporting images instead of full-slide screenshots.",
+    "Regenerate only the weak slide or batch rather than rebuilding the full deck."
   ]
 }

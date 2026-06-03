@@ -1,17 +1,159 @@
-# PPT Batch Split & Merge Skill
+# PPT Batch Split, Image Background & Editable Content Skill
 
-This skill improves long PPT generation by automatically splitting decks over 10 pages into smaller batches, then merging them into a consistent final deck.
+> 使用 **`img-gen + Presentation`** 将 PDF 指定内容规划并生成 PPT：`img-gen` 负责生成背景图，以及按 `Presentation` 的要求生成所需图片；其余 PPT 构建、排版、可编辑文本、备注、分批和合并工作全部交给 `Presentation`。
 
-## Important Text Rule
+## 项目定位
 
-Only the main text from the source PDF needs to be editable in the final PPT.
+本项目是一个 Codex skill，适用于从 PDF 生成 PPT 的场景，例如：
 
-Images are allowed for backgrounds, figures, screenshots, charts, decorations, diagrams, and other non-essential visual content.
+- 论文答辩 / 学术汇报；
+- 项目报告 / 商业提案；
+- 教学课件 / 培训材料；
+- 研究总结 / 技术方案说明。
 
-## Best Use
+它的目标不是把 PDF 页面简单截图成 PPT，而是保留 PDF 主要内容的可编辑性，同时使用生成式背景提升视觉效果。
 
-Use this for PDF-to-PPT workflows, especially when the deck is longer than 10 slides.
+## 实现技术
 
-## Core Principle
+项目实现技术为 **`img-gen + Presentation`**：
 
-Do not make the entire PPT a set of screenshots. Preserve visual fidelity with images where useful, but recreate the PDF’s main content as editable PowerPoint text.
+| 技术 | 职责 |
+| --- | --- |
+| `img-gen` | 生成每页背景图；按 `Presentation` 的版式、尺寸、安全区、风格和视觉需求生成必要图片素材。 |
+| `Presentation` | 负责除图片生成外的其余工作：规划落地、创建 PPT、排版、插入图片、添加可编辑文本/形状/表格、添加可选备注、分批组装和合并。 |
+
+关键规则：`img-gen` 只产出背景图和 `Presentation` 要求的图片素材；标题、要点、结论、重要标签、主要 PDF 摘要等关键文本，以及版式组织、备注、页码和最终 PPT 结构，必须由 `Presentation` 处理并保持可编辑。
+
+## 仓库文件
+
+- `SKILL.md`：Codex 执行该 skill 时使用的完整规则。
+- `tools/batch_plan_template.json`：生成 PPT 前使用的结构化计划模板，用于记录预检问题、页数分配、大纲、逐页背景 prompt、分批计划、合并计划和质量检查。
+
+## 执行前必须询问的问题
+
+在分析 PDF、生成大纲、调用 `img-gen` 或创建 PPT 之前，必须先确认以下问题；如果用户请求中已经明确给出，则无需重复询问。
+
+1. **PDF 中哪部分内容要生成 PPT？**
+   - 可接受：页码范围、章节、节标题、图表范围、指定主题等。
+   - 如果 PDF 范围未知，不能继续执行。
+2. **PPT 使用什么风格？**
+   - 如果用户未指定，默认使用 **学院简约风格 / academic minimalist style**。
+   - 该风格同时用于 PPT 主题和每页 `img-gen` 背景 prompt。
+3. **是否为 PPT 生成备注？**
+   - 如果需要：为每页生成简洁演讲者备注。
+   - 如果不需要：不添加备注。
+   - 如果未指定且必须继续：默认不生成备注，并在计划中记录该默认值。
+
+## 标准工作流
+
+1. 确认 PDF 范围、PPT 风格、是否生成备注。
+2. 分析指定 PDF 内容：
+   - 内容量 / 密度；
+   - 概念重要程度；
+   - 汇报叙事优先级；
+   - 图、表、图表、公式、架构图的重要性；
+   - 是否需要 1 页、多页，或只需简要提及。
+3. 按内容量和重要程度分配 PPT 页数，不能按 PDF 页数平均分配。
+4. 生成完整 `slide_outline`。
+5. 如果计划超过 10 页，生成 `batch_plan`，按逻辑章节拆成 5–10 页一批。
+6. 由 `Presentation` 确定每页图片需求、尺寸、风格和安全区域，再调用 `img-gen` 生成背景图或必要图片素材。
+7. 使用 `Presentation` 插入每页背景图和图片素材。
+8. 使用 `Presentation` 完成排版，并添加标题、要点、结论、说明、图表注释等可编辑 PowerPoint 内容。
+9. 仅在用户要求时使用 `Presentation` 添加备注。
+10. 执行最终质量检查。
+
+## 页数分配建议
+
+如果用户未指定总页数，可参考以下默认分配：
+
+| 内容区域 | 建议页数 |
+| --- | ---: |
+| 封面 / 标题 | 1 |
+| 目录 / 汇报结构 | 1（需要时） |
+| 背景 / 动机 | 1–3 |
+| 问题定义 / 目标 | 1–2 |
+| 相关工作 / 上下文 | 1–3 |
+| 方法 / 设计 / 框架 | 2–5 |
+| 数据 / 实验设置 / 实现 | 1–3 |
+| 结果 / 分析 / 讨论 | 2–6 |
+| 案例 / 应用 | 1–3 |
+| 总结 / 展望 | 1–2 |
+| 致谢 / Q&A | 1（需要时） |
+
+## `img-gen` 背景要求
+
+`img-gen` 的输入应由 `Presentation` 的页面规划驱动。每页背景或图片素材 prompt 应包含：
+
+- 页码和标题；
+- 当前页的目的 / 核心信息；
+- 已确认 PPT 风格，未指定时使用 **学院简约风格**；
+- 配色方案；
+- `Presentation` 指定的版式方向、图片尺寸和可编辑文本安全区域；
+- 背景类型：抽象、学院、商务、技术、极简、插画等；
+- 可参考的 PDF 图像区域；
+- 禁止把最终可读正文、关键标题、要点或结论嵌入图片的说明。
+
+除背景图和 `Presentation` 明确要求的图片素材外，`img-gen` 不负责 PPT 的文字排版、备注、页码、分批、合并或最终结构。
+
+## 可编辑性规则
+
+以下内容必须通过 `Presentation` 添加为可编辑对象：
+
+- 幻灯片标题；
+- 章节标题；
+- 关键要点；
+- 核心结论；
+- 主要段落摘要；
+- 表达 PDF 关键含义的重要标签；
+- 对当前页论证至关重要的表格数值；
+- 解释图片、图表或公式所需的简短说明。
+
+以下内容可以作为图片保留：
+
+- `img-gen` 背景图；
+- 装饰元素；
+- 截图；
+- 图、图表、复杂公式、架构图；
+- PDF 页面背景或裁剪区域；
+- 对论证不关键的复杂表格。
+
+## 10 页以上 PPT 的分批策略
+
+当计划 PPT 超过 10 页时：
+
+1. 先分析完整 PDF 指定范围。
+2. 先生成完整页数分配和 `slide_outline`。
+3. 按逻辑章节拆分批次，而不是机械按页码切分。
+4. 每批 5–10 页；设计复杂时优先 5 页，普通学术/报告类优先 6–8 页。
+5. 保持统一的主题、字体、页码、背景风格和可编辑文本叠加规则。
+6. 优先通过 `Presentation` 基于统一 slide specification 生成最终 PPT；如果生成了独立批次文件，再通过 `Presentation` 进行组装或合并。
+
+## 使用 `batch_plan_template.json`
+
+生成 PPT 前，使用 `tools/batch_plan_template.json` 作为计划脚手架，至少填写：
+
+- `preflight_questions`：PDF 范围、PPT 风格、备注偏好；
+- `deck_plan`：目标页数、实际计划页数、风格系统、可编辑性规则；
+- `slide_count_allocation`：每个 PDF 部分的内容量、重要性、视觉复杂度、分配页数和原因；
+- `slide_outline`：每页标题、来源、核心信息、可编辑文本、`img-gen` 背景 prompt、备注状态；
+- `batch_plan`：超过 10 页时的批次范围和批次检查；
+- `merge_plan`：是否需要合并、最终输出路径和合并检查；
+- `quality_checks`：交付前检查项。
+
+## 最终质量检查
+
+交付前确认：
+
+- PDF 范围已确认；
+- PPT 风格已确认，或已默认学院简约风格；
+- 是否生成备注已确认，或已默认不生成；
+- 页数符合计划或用户要求；
+- 页数分配体现内容量和重要程度；
+- 每页顺序匹配大纲；
+- 每页有 `img-gen` 背景图，或有按 `Presentation` 要求生成/选择的图片素材；
+- 主要 PDF / 大纲文本可编辑；
+- 关键标题、要点、结论没有被压成不可编辑图片；
+- 备注只在用户要求时存在；
+- 页码连续；
+- 批次之间风格一致；
+- 背景留有足够对比度和空白区域承载可编辑文本。
