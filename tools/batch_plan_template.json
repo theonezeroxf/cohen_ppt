@@ -1,12 +1,12 @@
 {
   "template_name": "ppt_batch_split_img_gen_plan",
-  "template_version": "2.1.0",
-  "purpose": "Plan a PDF-to-PPT deck using img-gen + Presentation by confirming PDF scope, template strategy (reuse a template-library PPT template or generate a new logo/prompt-based template), style, and speaker-notes preference; allocating slide counts by content volume and importance; generating an outline; applying the resolved template system; letting Presentation define image requirements; using img-gen for backgrounds and Presentation-requested image assets; and batching decks over 10 slides.",
+  "template_version": "2.2.0",
+  "purpose": "Plan a PDF-to-PPT deck using img-gen + Presentation by confirming PDF scope, PPT production idea (PDF-content idea or user-provided custom idea), template strategy (reuse a template-library PPT template or generate a new logo/prompt-based template), style, and speaker-notes preference; allocating slide counts by content volume and importance; generating an outline; applying the resolved production idea and template system; letting Presentation define image requirements; using img-gen for backgrounds and Presentation-requested image assets; and batching decks over 10 slides.",
   "implementation_technology": {
     "stack": "img-gen + Presentation",
     "img_gen_role": "Generate slide background images, logo-template decorative backgrounds or motifs, and any additional image assets requested by Presentation, following Presentation-provided dimensions, style, visual references, and editable-text safe areas.",
     "presentation_role": "Handle all remaining work: plan execution, template-library PPT reuse, logo/prompt-based template creation, PPT creation, layout, inserting generated images, editable text and PowerPoint objects, optional speaker notes, page numbering, batch assembly, and merging.",
-    "critical_rule": "Resolve the template strategy before generation. img-gen only produces backgrounds, logo-template decorative image assets, and Presentation-requested image assets. Do not embed final readable titles, bullet points, conclusions, or main PDF-derived text in img-gen images; add them through Presentation as editable PPT content."
+    "critical_rule": "Resolve the PPT production idea and template strategy before generation. img-gen only produces backgrounds, logo-template decorative image assets, and Presentation-requested image assets. Do not embed final readable titles, bullet points, conclusions, or main PDF-derived text in img-gen images; add them through Presentation as editable PPT content."
   },
   "preflight_questions": {
     "pdf_scope": {
@@ -22,6 +22,33 @@
       ],
       "value": null,
       "notes": "Do not proceed to slide allocation, outline generation, template creation/selection, img-gen, or PPT creation until this is known."
+    },
+    "ppt_production_idea": {
+      "question": "Should the PPT production idea follow the PDF content, or should it follow a user-provided custom idea?",
+      "required": true,
+      "status": "unanswered",
+      "allowed_values": [
+        "pdf_content_idea",
+        "custom_user_idea"
+      ],
+      "value": null,
+      "pdf_content_idea": {
+        "description": "Infer the storyline, emphasis, slide order, and structure from the confirmed PDF scope, content density, importance, and narrative priority.",
+        "notes": "Use this when the user wants the PPT logic to be organized from the PDF content."
+      },
+      "custom_user_idea": {
+        "custom_idea_prompt": null,
+        "accepted_inputs": [
+          "custom narrative",
+          "target audience",
+          "key emphasis",
+          "preferred structure",
+          "slide-making requirements",
+          "sections to prioritize or de-emphasize"
+        ],
+        "notes": "Collect the custom production idea before slide allocation and outline generation."
+      },
+      "notes": "Do not generate PPT files until this production idea is resolved."
     },
     "template_strategy": {
       "question": "Should the PPT reuse a template-library PPT template, or should a new template be generated from a logo and prompt?",
@@ -65,7 +92,7 @@
       "status": "defaulted",
       "default": "academic minimalist style",
       "value": "academic minimalist style",
-      "usage": "Use consistently in the PPT theme, template strategy, Presentation layout choices, and every img-gen background or Presentation-requested image prompt. For logo-based templates, infer a compatible style from the logo and prompt unless the user provides one."
+      "usage": "Use consistently in the PPT theme, PPT production idea, template strategy, Presentation layout choices, and every img-gen background or Presentation-requested image prompt. For logo-based templates, infer a compatible style from the logo and prompt unless the user provides one."
     },
     "speaker_notes": {
       "question": "Should speaker notes be generated for the PPT?",
@@ -87,11 +114,34 @@
       "title_style": "",
       "body_style": "",
       "page_numbering": "",
-      "background_art_direction": "Use the confirmed style and resolved template strategy; default to academic minimalist style when unspecified. Presentation must define image dimensions, safe areas, and visual requirements before img-gen is called.",
+      "background_art_direction": "Use the confirmed style, resolved PPT production idea, and resolved template strategy; default to academic minimalist style when unspecified. Presentation must define image dimensions, safe areas, and visual requirements before img-gen is called.",
       "editable_text_overlay_rules": "Presentation controls readable safe areas, high contrast, and consistent spacing for editable text boxes."
     },
     "text_editability_rule": "Main PDF-derived or outline-derived text must be editable PowerPoint text added through Presentation; non-essential visuals may be images.",
     "speaker_notes_rule": "Generate notes only if preflight_questions.speaker_notes.value is true.",
+    "ppt_production_idea": {
+      "mode": "pdf_content_idea | custom_user_idea",
+      "status": "unresolved",
+      "pdf_content_idea": {
+        "inferred_storyline": "",
+        "inferred_emphasis": [],
+        "inferred_structure": [],
+        "source_basis": [
+          "confirmed PDF scope",
+          "content density",
+          "importance",
+          "narrative priority"
+        ]
+      },
+      "custom_user_idea": {
+        "custom_idea_prompt": null,
+        "target_audience": "",
+        "key_emphasis": [],
+        "preferred_structure": [],
+        "slide_making_requirements": []
+      },
+      "application_rule": "Resolve the PPT production idea before slide allocation and outline generation so page allocation, section order, editable content emphasis, and visual hierarchy follow the chosen idea."
+    },
     "template_strategy": {
       "mode": "reuse_template_library | generate_from_logo_prompt",
       "status": "unresolved",
@@ -155,6 +205,13 @@
       },
       "content_priority": "high | medium | low",
       "allocation_reason": "",
+      "ppt_production_idea_application": {
+        "mode": "pdf_content_idea | custom_user_idea",
+        "custom_idea_requirements_used": [],
+        "storyline_role": "",
+        "emphasis_notes": "",
+        "structure_notes": ""
+      },
       "editable_main_text": {
         "title": "",
         "section_heading": "",
@@ -236,6 +293,7 @@
         "batch_output_path": null,
         "batch_checks": [
           "slide order matches outline",
+          "production idea matches the resolved PDF-content or custom-user idea",
           "titles and main text are editable",
           "img-gen backgrounds are present or intentionally selected",
           "extra img-gen image assets were requested by Presentation",
@@ -243,7 +301,8 @@
           "speaker notes presence matches user preference",
           "template source or generated logo-template system matches other batches",
           "style matches other batches"
-        ]
+        ],
+        "production_idea_notes": "Use the resolved PPT production idea consistently for slide order, emphasis, section transitions, and visual hierarchy in this batch."
       }
     ]
   },
@@ -255,6 +314,7 @@
     "final_output_path": null,
     "merge_checks": [
       "slide order is correct",
+      "PPT production idea is consistent across all slides and batches",
       "page numbers are continuous",
       "font styles are consistent",
       "theme is consistent",
@@ -266,12 +326,14 @@
   },
   "quality_checks": [
     "PDF scope was confirmed before generation",
+    "PPT production idea was confirmed before generation",
     "Template strategy was confirmed before generation",
     "PPT style was confirmed or defaulted to academic minimalist style",
     "implementation technology is img-gen + Presentation",
     "Selected template-library PPT or generated logo/prompt-based template was applied through Presentation before slide generation",
     "Logo-based template generation used a logo asset/reference and prompt when requested",
     "speaker-notes preference was confirmed or defaulted to no speaker notes",
+    "Slide allocation and outline follow the resolved PDF-content or custom-user production idea",
     "slide count matches the planned or requested count",
     "slide allocation reflects PDF content volume and importance",
     "slide order matches the outline",
