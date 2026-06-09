@@ -1,5 +1,5 @@
 ---
-name: ppt-batch-split-merge
+name: cohen_ppt
 description: Automatically plan PDF-to-PPT decks by confirming scope, notes, and template strategy; either reusing a template-library PPT template or generating a new logo/prompt-based PPT template; then allocating slide counts, creating img-gen backgrounds, adding editable content with Presentation, and batching decks over 10 pages.
 ---
 
