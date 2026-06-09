@@ -1,15 +1,15 @@
 ---
 name: cohen_ppt
-description: Automatically plan PDF-to-PPT decks by confirming scope, notes, and template strategy; either reusing a template-library PPT template or generating a new logo/prompt-based PPT template; then allocating slide counts, creating img-gen backgrounds, adding editable content with Presentation, and batching decks over 10 pages.
+description: Automatically plan PDF-to-PPT decks by confirming scope, notes, and one visual-source choice (style description, logo-derived template, or template-library PPT); saving generated templates as reusable PPTX files; then allocating slide counts, creating img-gen backgrounds, adding content with Presentation, and batching decks over 10 pages.
 ---
 
-# PPT Batch Split, Template Strategy, Image Background & Editable Content Skill
+# PPT Batch Split, Template Strategy, Image Background & Content Skill
 
 ## Purpose
 
 Use this skill for PDF-to-PPT tasks such as thesis defenses, reports, proposals, teaching slides, project summaries, and other decks derived from specified portions of a PDF.
 
-Before execution, the workflow must first confirm five inputs with the user: which part of the PDF should be converted into PPT, whether to build the PPT narrative from the PDF content or from a user-provided custom production idea, whether to reuse a PPT template from the template library or generate a new template from a logo and prompt, what visual style the PPT should use, and whether speaker notes should be generated. If the user chooses to generate a new template, collect the logo asset and template prompt before creating the deck theme. If the user does not specify a style, use the default **academic minimalist style** for the deck and for every `img-gen` background prompt. After confirming these inputs, analyze the requested PDF sections, decide how many PPT slides each content area deserves based on **content volume and importance**, generate a complete outline, create a custom background image for every slide with `img-gen`, and finally add the outline or PDF-derived content into the PPT as editable PowerPoint objects where required.
+Before execution, the workflow must first confirm four inputs with the user: which part of the PDF should be converted into PPT, whether to build the PPT narrative from the PDF content or from a user-provided custom production idea, which **one** visual source to use, and whether speaker notes should be generated. The visual-source choice is mutually exclusive: **style description**, **logo-derived template**, or **template-library PPT reuse**. Do not ask for a separate style when the user has already chosen a logo-derived template or reusable PPT template; their logo/prompt or selected template is the style source. If the user chooses style description and does not specify a style, use the default **academic minimalist style** for the deck and for every `img-gen` background prompt. If the user chooses a logo-derived template, collect the logo asset and template prompt before creating the deck theme and save the generated reusable template as a `.pptx` file before or alongside the final deck. After confirming these inputs, analyze the requested PDF sections, decide how many PPT slides each content area deserves based on **content volume and importance**, generate a complete outline, create a custom background image for every slide with `img-gen`, and finally add the outline or PDF-derived content into the PPT with `Presentation`.
 
 When the requested or planned PPT has more than 10 pages, do not generate the whole deck in one pass. Generate slides in smaller batches, then merge them into one consistent final deck.
 
@@ -17,11 +17,11 @@ When the requested or planned PPT has more than 10 pages, do not generate the wh
 
 Use **`img-gen + Presentation`** as the implementation technology for this skill:
 
-- Use `img-gen` only to generate slide background images, logo-template decorative backgrounds or motifs, and any additional image assets requested by `Presentation` for a slide.
-- Use `Presentation` for all remaining work: planning execution, template-library PPT reuse, logo/prompt-based template system creation, PPT creation, layout, inserting generated images, editable text boxes/shapes/tables, optional speaker notes, page numbering, batch assembly, and merging.
-- `Presentation` defines the image requirements for `img-gen`, including dimensions, style, layout intent, visual references, and editable-text safe areas.
-- Do not use `img-gen` to create final readable titles, bullet points, conclusions, or other critical PDF-derived text. Those must be added through `Presentation` as editable PPT objects.
-- When checking quality, verify both sides of the implementation: the resolved template system is applied consistently, `img-gen` backgrounds/assets satisfy `Presentation` requirements, and `Presentation` content remains editable.
+- Use `img-gen` only to generate slide background images, style-description/logo-template decorative backgrounds or motifs, and any additional image assets requested by `Presentation` for a slide.
+- Use `Presentation` for all remaining work: planning execution, visual-source resolution, template-library PPT reuse, style-description template creation, logo/prompt-based template system creation, saving generated templates as reusable `.pptx` files, PPT creation, layout, inserting generated images, text boxes/shapes/tables, optional speaker notes, page numbering, batch assembly, and merging.
+- `Presentation` defines the image requirements for `img-gen`, including dimensions, style, layout intent, visual references, and content safe areas.
+- Let `Presentation` handle final readable titles, bullet points, conclusions, and other critical PDF-derived text unless the user explicitly requests image-based output.
+- When checking quality, verify both sides of the implementation: the resolved template system is applied consistently, `img-gen` backgrounds/assets satisfy `Presentation` requirements, and `Presentation` content is present.
 
 ## Required Pre-Execution Questions
 
@@ -29,45 +29,54 @@ Before analyzing the PDF or generating any outline, backgrounds, templates, or P
 
 1. **Which part of the PDF should be used to generate the PPT?** Examples: page ranges, chapters, sections, figure/table ranges, or named topics.
 2. **What PPT production idea should be used?** Ask whether the deck should follow an idea inferred from the PDF content, or a custom production idea provided by the user. If the user chooses a custom idea, collect the custom narrative, audience, emphasis, structure, or slide-making requirements before outlining.
-3. **Should the PPT reuse a template-library PPT template, or should a new template be generated from a logo and prompt?** If reusing the template library, ask the user to choose or describe the preferred library template. If generating a new template, collect the logo file/path/image reference and a template prompt describing brand, audience, mood, colors, and any constraints.
-4. **What PPT style should be used?** If the user does not specify a style, default to **academic minimalist style**. Use this style consistently in the deck theme, PPT production idea, template strategy, and every `img-gen` background prompt. If a logo-derived template is requested, infer a compatible style from the logo and user prompt unless the user provides an explicit style.
-5. **Should speaker notes be generated for the PPT?** Ask whether to create notes for each slide. If the user says yes, add concise presenter notes derived from the outline/PDF content. If the user says no, do not add notes.
+3. **Which single visual source should be used?** The user must choose exactly one of these mutually exclusive options:
+   - **Style description:** collect the deck style / mood / color / audience / constraints. If unspecified, default to **academic minimalist style**. Use `Presentation` to turn this style into a reusable template system, and save that generated template as a `.pptx`.
+   - **Logo-derived template:** collect the logo file/path/image reference and a template prompt describing brand, audience, mood, colors, and constraints. Use the logo/prompt as the visual style source, not a separate style question. Save the generated template as a reusable `.pptx`.
+   - **Template-library PPT reuse:** ask the user to choose or describe the preferred library `.pptx` template. Use that template as the visual style source, not a separate style question.
+4. **Should speaker notes be generated for the PPT?** Ask whether to create notes for each slide. If the user says yes, add concise presenter notes derived from the outline/PDF content. If the user says no, do not add notes.
 
-Do not proceed to slide allocation, outline generation, template creation/selection, image generation, or PPT creation until the PDF scope, PPT production idea, and template strategy are known. If style or notes preference is missing and the user cannot be reached, use **academic minimalist style** and **no speaker notes** as safe defaults, but still require a known PDF scope, known PPT production idea, and known template strategy.
+Do not proceed to slide allocation, outline generation, template creation/selection, image generation, or PPT creation until the PDF scope, PPT production idea, and visual-source choice are known. If speaker-notes preference is missing and the user cannot be reached, use **no speaker notes** as a safe default. If the visual-source choice is style description but no style details are available, use **academic minimalist style** as the default style description.
 
 
-## Template Strategy
+## Visual Source and Template Strategy
 
-Before generating any PPT file, the user must choose one of two template paths:
+Before generating any PPT file, the user must choose exactly one of three visual-source paths. These paths are mutually exclusive; do not combine a separate style-description request with logo-derived styling or template-library reuse unless the user explicitly asks to override the chosen source.
 
-1. **Reuse a template-library PPT template**
+1. **Style description**
+   - Ask the user for style, mood, audience, palette, density, and constraints; if missing, default to **academic minimalist style**.
+   - Use `Presentation` to convert the style description into a reusable template system: cover slide, agenda slide, section divider, content slide, visual/chart slide, summary slide, and closing/Q&A slide where appropriate.
+   - Save the generated template system as a reusable `.pptx` file, record its path in the plan, and use it as the source for the final deck and future exports.
+   - Use `img-gen` only for template backgrounds, decorative motifs, or supporting image assets requested by `Presentation`; do not place placeholder labels, slide titles, bullet text, or core content into template background images unless requested.
+
+2. **Reuse a template-library PPT template**
    - Ask the user to select a template by name, path, category, thumbnail, or description.
    - Use `Presentation` to inspect the selected `.pptx` and preserve its reusable theme elements: master layouts, colors, fonts, title/body styles, section dividers, placeholder geometry, page-number style, and visual motifs.
-   - Adapt the generated deck outline to the selected template rather than flattening the template into screenshots.
-   - If the selected template conflicts with readability or editability requirements, keep the template's brand direction but adjust layouts through editable `Presentation` objects.
+   - Adapt the generated deck outline to the selected template rather than converting the whole template into screenshots.
+   - If the selected template conflicts with readability requirements, keep the template's brand direction but adjust layouts through `Presentation`.
 
-2. **Generate a new template from logo and prompt**
+3. **Generate a new template from logo and prompt**
    - Require a logo asset or clear logo reference plus a template prompt before creating the template. The prompt should describe brand personality, audience, mood, preferred or forbidden colors, industry context, and any layout constraints.
-   - Analyze the logo for palette, contrast, geometry, visual rhythm, and typography cues. Combine that analysis with the prompt and confirmed PPT style.
+   - Analyze the logo for palette, contrast, geometry, visual rhythm, and typography cues. Combine that analysis with the prompt; do not ask for or apply a separate style description unless the user explicitly asks for an override.
    - Use `Presentation` to create a reusable template system: cover slide, agenda slide, section divider, content slide, visual/chart slide, summary slide, and closing/Q&A slide where appropriate.
-   - Use `img-gen` only for template backgrounds, decorative motifs, or supporting image assets requested by `Presentation`; do not render editable template labels, slide titles, bullet text, or core content into images.
-   - Save or record the generated template asset/path when possible so future deck generations can reuse it.
+   - Use `img-gen` only for template backgrounds, decorative motifs, or supporting image assets requested by `Presentation`; do not place placeholder labels, slide titles, bullet text, or core content into template background images unless requested.
+   - Save the generated template system as a reusable `.pptx` file and record its path so future deck generations can reuse it or export from it.
 
-In both paths, the resulting template must be applied before per-slide background generation so every `img-gen` prompt and `Presentation` layout follows the same visual system.
+In all paths, the resolved template must be applied before per-slide background generation so every `img-gen` prompt and `Presentation` layout follows the same visual system. For generated templates (style-description or logo-derived), the reusable template `.pptx` should be produced and saved before or alongside the final content deck.
 
 ## Core Workflow
 
 For every PDF-to-PPT task:
 
-1. Confirm the PDF scope, PPT production idea, template strategy, PPT style, and speaker-notes preference using the required pre-execution questions.
+1. Confirm the PDF scope, PPT production idea, one visual-source/template strategy, and speaker-notes preference using the required pre-execution questions.
 2. Resolve the PPT production idea before slide allocation:
    - If using the PDF-content idea, infer the storyline, emphasis, and slide structure from the confirmed PDF scope, content density, importance, and narrative priority.
    - If using a custom idea, align the slide allocation, outline, emphasis, section order, and visual hierarchy to the user-provided custom narrative while still grounding content in the confirmed PDF scope.
    - Record the chosen idea mode and custom instructions in the plan so `Presentation` can follow them consistently.
-3. Resolve the template strategy before slide generation:
+3. Resolve the visual-source/template strategy before slide generation:
+   - If using a style description, derive the theme colors, typography direction, master layouts, cover/section/content/closing slide patterns, safe areas, and background art direction; then save the reusable generated template as a `.pptx`.
    - If reusing a library template, inspect or load the selected `.pptx` template, then map its theme colors, fonts, master layouts, section dividers, placeholders, and reusable visual components into the deck plan.
-   - If generating a new logo-based template, analyze the provided logo and prompt, derive a brand palette, typography direction, master layouts, cover/section/content/closing slide patterns, safe areas, and background art direction before creating per-slide backgrounds.
-   - Record the selected or generated template source in the plan, and ensure `Presentation` applies it consistently across all slides and batches.
+   - If generating a new logo-based template, analyze the provided logo and prompt, derive a brand palette, typography direction, master layouts, cover/section/content/closing slide patterns, safe areas, and background art direction before creating per-slide backgrounds; then save the reusable generated template as a `.pptx`.
+   - Record the selected or generated template source path in the plan, and ensure `Presentation` applies it consistently across all slides and batches.
 4. Identify the user-specified PDF sections, page ranges, chapters, figures, tables, or topics to cover.
 5. Analyze each specified part for:
    - Content amount / density
@@ -79,9 +88,9 @@ For every PDF-to-PPT task:
 7. Generate a complete slide outline before creating the PPT.
 8. For each planned slide, let `Presentation` define the background and image-asset requirements, then call `img-gen` to create the required background image or supporting image assets.
 9. Use `Presentation` to build the PPT and insert each generated background/image asset.
-10. Use `Presentation` to handle layout and add the slide outline or condensed PDF-derived content on top of the images as editable PowerPoint text objects.
+10. Use `Presentation` to handle layout and add the slide outline or condensed PDF-derived content on top of the images.
 11. Add speaker notes only if the user requested them.
-12. Verify that important PDF-derived text remains editable and that the final deck follows the outline.
+12. Verify that important PDF-derived content is represented and that the final deck follows the outline.
 
 ## Slide Count Allocation Rule
 
@@ -124,11 +133,11 @@ Before generating any backgrounds or slides, create a `slide_outline` with:
 - Source PDF page range or specified section
 - Content priority level: high / medium / low
 - Reason for assigning this slide
-- Main editable text to include
+- Main text to include
 - Visual idea for the background image
 - PPT production idea mode and any custom narrative or structure requirements
 - Template strategy and per-slide template layout type to apply
-- Confirmed PPT style, using **academic minimalist style** when no custom style is provided
+- Resolved visual source and style notes; use **academic minimalist style** only when the chosen source is style description and no custom style is provided
 - PDF figures, tables, screenshots, charts, or diagrams to reuse or reference
 - Notes about what may remain image-based
 - Speaker notes draft when the user requested notes, or `no speaker notes` when not requested
@@ -140,32 +149,32 @@ For decks over 10 pages, also create a `batch_plan` with:
 - Source PDF page ranges or sections
 - Batch number
 - Visual style notes
-- Template source or generated logo-template system to keep consistent
-- Which text must be editable
+- Template source or generated style-description/logo-derived template system to keep consistent
+- Which text/content to include
 - Which elements may be image-based
 
 ## Per-Slide `img-gen` Background Rule
 
-After the outline is approved or finalized, `Presentation` should define each slide’s image needs, then `img-gen` should create the background image and any supporting image assets required by `Presentation` before editable text is added through `Presentation`.
+After the outline is approved or finalized, `Presentation` should define each slide’s image needs, then `img-gen` should create the background image and any supporting image assets required by `Presentation` before final content is added through `Presentation`.
 
 For every `img-gen` background or image-asset prompt, include the requirements supplied by `Presentation`:
 
 - Slide number and title
 - Slide purpose / key message
-- Confirmed overall deck style; default to **academic minimalist style** if no custom style was specified
+- Resolved visual source style notes; default to **academic minimalist style** only for the style-description path when no custom style was specified
 - Color palette
-- `Presentation` layout direction, required image dimensions, and safe areas for editable text
+- `Presentation` layout direction, required image dimensions, and safe areas for text
 - Whether the background should be abstract, academic, business, technical, minimal, or illustration-heavy
 - Relevant PDF visual references when available
-- Instruction to avoid embedding final readable body text in the image background
+- Instruction to keep the background readable and unobtrusive
 
 ### Background Requirements
 
-- Generated backgrounds and image assets should support the slide narrative without replacing editable content or `Presentation` layout responsibilities.
-- Avoid putting critical titles, bullet points, conclusions, or PDF-derived main text inside any generated image.
-- Leave clear readable areas where `Presentation` will place PowerPoint text boxes.
+- Generated backgrounds and image assets should support the slide narrative without replacing `Presentation` layout responsibilities.
+- Keep generated images focused on visual support rather than overcrowding them with dense text.
+- Leave clear readable areas where `Presentation` will place PowerPoint content.
 - Use visual metaphors, subtle diagrams, section motifs, decorative shapes, or lightly blurred PDF visual references where helpful.
-- If `Presentation` requests a chart, figure, table, or other supporting image, `img-gen` may create or adapt that image asset, but its meaning must be explained with editable text added by `Presentation`.
+- If `Presentation` requests a chart, figure, table, or other supporting image, `img-gen` may create or adapt that image asset, but its meaning should be explained by content added with `Presentation`.
 
 ## Speaker Notes Rule
 
@@ -174,28 +183,6 @@ Generate speaker notes only after asking the user whether notes are needed.
 - If the user requests notes, create concise presenter notes for each slide based on the outline and corresponding PDF content. Notes should explain the slide narrative, transitions, and key talking points without duplicating every bullet verbatim.
 - If the user does not request notes, do not add speaker notes.
 - If the user has not answered and execution must continue, use **no speaker notes** as the default, but document that default in the outline.
-- Speaker notes do not replace editable slide text; important titles, bullets, and conclusions still need editable slide objects.
-
-## Text Editability Requirement
-
-Only the **main text from the source PDF or generated outline** must be editable in the PPT.
-
-Main editable text includes:
-
-- Slide titles derived from the PDF or outline
-- Section titles
-- Key bullet points
-- Core conclusions
-- Main paragraph summaries
-- Important labels that represent the PDF’s essential meaning
-- Important table values when they are central to the slide argument
-- Short explanatory notes needed to understand image-based figures or charts
-
-These must be recreated as real PowerPoint text objects, such as:
-
-- Editable text boxes
-- Editable shape text
-- Editable table cells when practical
 
 ## What Can Be Images
 
@@ -209,49 +196,41 @@ The following may be inserted as images when this improves visual fidelity or ef
 - Diagrams
 - Tables whose values are not central to the slide argument
 - Icons, logos, illustrations, photos
-- Complex formulas or visual elements that are not intended for editing
+- Complex formulas or visual elements
 - Original PDF visual regions used as reference images
 
-It is acceptable for a slide to use an image as the visual base, as long as the important text from the PDF or outline is separately recreated as editable PPT text where needed.
+It is acceptable for a slide to use images for backgrounds, figures, diagrams, tables, formulas, icons, logos, illustrations, photos, or original PDF visual regions when this improves visual fidelity or efficiency.
 
 ## Forbidden Behavior
 
-Do not start execution without first asking which part of the PDF should be used, whether to follow the PDF-content production idea or a user-provided custom production idea, whether to reuse a template-library PPT template or generate a new logo/prompt-based template, what PPT style should be used, and whether speaker notes should be generated, unless those answers are already explicit in the user request.
+Do not start execution without first asking which part of the PDF should be used, whether to follow the PDF-content production idea or a user-provided custom production idea, which single visual source to use (style description, logo-derived template, or template-library PPT reuse), and whether speaker notes should be generated, unless those answers are already explicit in the user request.
 
-Do not proceed if the PDF scope, PPT production idea, or template strategy is unknown.
+Do not proceed if the PDF scope, PPT production idea, or visual-source/template strategy is unknown.
 
-Do not start by generating slides before resolving the PPT production idea and template strategy, analyzing the specified PDF content, and producing a slide allocation outline.
+Do not start by generating slides before resolving the PPT production idea and visual-source/template strategy, analyzing the specified PDF content, and producing a slide allocation outline.
 
 Do not assign the same number of slides to each PDF section without considering content amount and importance.
 
-Do not generate a logo-based template without a logo asset/reference and prompt. Do not ignore the selected template-library PPT when the user chose template reuse.
+Do not generate a logo-based template without a logo asset/reference and prompt. Do not ask for a separate style description when the logo/prompt is the chosen visual source. Do not ignore the selected template-library PPT when the user chose template reuse.
 
 Do not skip the per-slide `img-gen` background step unless the user explicitly asks not to use generated backgrounds; additional generated image assets should only be created when requested by `Presentation`.
 
-Do not satisfy the task by only inserting full-page PDF screenshots if the PDF’s main text is not editable.
-
-Do not rasterize all meaningful text into images.
-
-Do not convert titles, key points, or important conclusions into non-editable image text.
-
-Do not use OCR-only image text as the final editable content when reliable extracted PDF text is available.
-
-Do not embed final bullet lists or critical readable paragraphs into `img-gen` backgrounds.
+Do not overcrowd `img-gen` backgrounds with dense readable paragraphs.
 
 ## Recommended PDF-to-PPT Construction Approach
 
 For each slide:
 
-1. Read the corresponding PDF section/page range, resolved PPT production idea, resolved template strategy, confirmed PPT style, speaker-notes preference, and approved outline entry.
-2. Apply the selected template-library PPT template or generated logo-based template system through `Presentation`, preserving editable layout objects and theme consistency.
+1. Read the corresponding PDF section/page range, resolved PPT production idea, resolved visual-source/template strategy, speaker-notes preference, and approved outline entry.
+2. Apply the selected template-library PPT template or generated logo-based template system through `Presentation`, preserving layout structure and theme consistency.
 3. Use `Presentation` to define the needed background and supporting image assets, including dimensions, style, safe areas, and visual references.
-4. Generate or reuse the planned `img-gen` background image and any `Presentation`-requested image assets using the confirmed style, defaulting to academic minimalist style when unspecified.
+4. Generate or reuse the planned `img-gen` background image and any `Presentation`-requested image assets using the resolved visual source, defaulting to academic minimalist style only for the style-description path when unspecified.
 5. Use `Presentation` to insert the background as a full-slide image and place any generated supporting image assets.
 6. Extract the main text from the corresponding PDF section/page.
 7. Rewrite or condense the main text for presentation use.
-8. Use `Presentation` to add the rewritten title, key points, and conclusions as editable PPT text boxes.
+8. Use `Presentation` to add the rewritten title, key points, and conclusions.
 9. Use `Presentation` to add essential PDF figures, charts, diagrams, or tables as images when helpful.
-10. Use `Presentation` to add editable captions, labels, explanations, or takeaways for important visuals.
+10. Use `Presentation` to add captions, labels, explanations, or takeaways for important visuals.
 11. Use `Presentation` to add speaker notes only when requested by the user.
 12. Keep the layout clean and readable, using the background safe areas.
 
@@ -264,7 +243,7 @@ For PPTs over 10 pages:
 3. Split the outline into batches of 5–10 slides.
 4. Use `Presentation` to drive batch slide layouts and call `img-gen` only for the backgrounds or image assets required by those layouts.
 5. Use `Presentation` to assemble or merge the batches into one final `.pptx`.
-6. Run consistency and editability checks.
+6. Run consistency checks.
 
 Default batch size:
 
@@ -290,14 +269,14 @@ All slides and batches must share:
 
 - Same slide size
 - Same theme colors
-- Same selected template-library source or generated logo-based template system
+- Same selected template-library source or generated style-description/logo-derived template system
 - Same title style
 - Same body font style
 - Same page numbering format
 - Same spacing rules
 - Same section divider style
-- Same background image art direction based on the confirmed PPT style
-- Consistent overlay treatment for editable text
+- Same background image art direction based on the resolved visual source
+- Consistent overlay treatment for content
 - Consistent speaker notes behavior across all slides
 
 ## Merge Rule
@@ -312,29 +291,26 @@ If separate batch files are created, merge them only after checking:
 - Theme consistency
 - Master/layout consistency when possible
 - Background image and `Presentation`-requested image asset consistency
-- Template source, master layouts, or generated logo-template system consistency
-- Editable main text presence
+- Template source, master layouts, or generated style-description/logo-derived template system consistency
 - Speaker notes presence or absence according to the user preference
 
 ## Quality Check
 
 Before final output, verify:
 
-- Template strategy was confirmed before PPT generation
-- Selected template-library PPT or generated logo/prompt-based template was applied before per-slide generation
+- Visual-source/template strategy was confirmed before PPT generation
+- Exactly one visual source was used: style description, logo-derived template, or template-library PPT reuse
+- Selected template-library PPT or generated style-description or logo/prompt-based template was applied before per-slide generation
+- Generated style-description or logo-based templates were saved as reusable `.pptx` files
 - Logo-based template generation used both a logo asset/reference and prompt when requested
 - Total slide count matches the planned or requested count
 - Slide count allocation matches the PDF content amount and importance analysis
 - Slide order matches the outline
 - Every slide has a generated or intentionally selected background image, and any extra `img-gen` assets were requested by `Presentation`
-- Every slide has editable title or main heading when applicable
-- Main PDF-derived or outline-derived text is editable
-- Non-essential graphics may remain images
-- No critical content is only present as flattened image text
 - Page numbers are continuous
 - No repeated placeholder text
 - No obvious batch-to-batch style drift
-- Background images and assets leave enough contrast and whitespace for `Presentation` editable content
+- Background images and assets leave enough contrast and whitespace for `Presentation` content
 - Speaker notes are present only if requested, and absent when not requested
 
 ## Recovery Strategy
@@ -345,16 +321,16 @@ Common fixes:
 
 - Reallocate slides if a section is too compressed or too sparse
 - Reduce text density
-- Turn long paragraphs into editable bullets
+- Turn long paragraphs into concise bullets
 - Regenerate a background with larger safe areas or lower visual complexity
 - Use PDF visuals as reference images rather than full-slide screenshots
-- Recreate only the main text as editable overlays
-- Simplify complex tables into editable summaries
+- Recreate only the weak slide elements
+- Simplify complex tables into presentation-friendly summaries
 
 ## Summary Principle
 
-First ask which PDF content to use, whether to follow a PDF-content production idea or a user-provided custom production idea, whether to reuse a template-library PPT template or generate a new logo/prompt-based template, what PPT style to apply, and whether to generate speaker notes. Use academic minimalist style by default when style is unspecified. Then analyze the specified PDF content and decide slide allocation by amount and importance. Then create the outline. Then use `Presentation` to define image needs, call `img-gen` only for backgrounds and `Presentation`-requested image assets, and use `Presentation` for all remaining PPT construction, editable outline/PDF-derived content, speaker notes, batching, and merging.
+First ask which PDF content to use, whether to follow a PDF-content production idea or a user-provided custom production idea, which single visual source to use (style description, logo-derived template, or template-library PPT reuse), and whether to generate speaker notes. Use academic minimalist style by default only when the chosen visual source is style description and style details are unspecified. Then analyze the specified PDF content and decide slide allocation by amount and importance. Then create the outline. Then use `Presentation` to define image needs, call `img-gen` only for backgrounds and `Presentation`-requested image assets, and use `Presentation` for all remaining PPT construction, outline/PDF-derived content, speaker notes, batching, and merging.
 
 For decks over 10 slides: split, generate, check, and merge.
 
-From PDF: main text editable; background and non-essential visual elements may be images.
+From PDF: background and visual elements may be images when appropriate.
